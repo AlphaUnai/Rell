@@ -1,0 +1,24 @@
+{
+    "rosa":[
+    {
+        "nombre":"La pantera rosa",
+        "url":"https://static.wikia.nocookie.net/doblaje/images/2/20/Rosa_pantera.jpeg/revision/latest?cb=20181127022347&path-prefix=es"
+    },
+    {
+    "nombre":"Majin Boo",
+    "url":"https://static.wikia.nocookie.net/dragonball/images/7/7c/Boo.png/revision/latest?cb=20120919200013&path-prefix=es" 
+    },
+    {
+        "nombre":"Patricio Estrella",
+        "url":"https://static.wikia.nocookie.net/doblaje/images/d/d3/PatricioEstrellaBobEsponja02.png/revision/latest?cb=20190515235732&path-prefix=es" 
+    },
+    {
+        "nombre":"Sakura Haruno",
+        "url":"https://static.wikia.nocookie.net/naruto/images/8/8e/Sakura_Haruno_Parte_III_Anime.png/revision/latest?cb=20150807213627&path-prefix=es" 
+    },
+    {
+        "nombre":"Pinkie Pie",
+        "url":"https://static.wikia.nocookie.net/mlp/images/4/42/PinkiePie.png/revision/latest?cb=20140611235315&path-prefix=es" 
+    }
+]
+}
