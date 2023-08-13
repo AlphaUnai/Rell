@@ -254,7 +254,7 @@ client.on('interactionCreate', (itr)=>{
             const voiceCon=joinVoiceChannel({
               channelId:voiceChan,
               guildId:itr.guildId,
-              autoSelfDeaf:false,
+              selfDeaf:false,
               adapterCreator:itr.guild.voiceAdapterCreator,
             })
             
