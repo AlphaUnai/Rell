@@ -53,6 +53,11 @@ const player = new Player(client, {
     leaveOnStop: false,
 });
 const rest= new REST({version: '10'}).setToken(token);
+
+const ytdl = require("ytdl-core");
+
+ var servers={}
+
 client.player=player;
 client.login(token);
 
@@ -123,204 +128,46 @@ const comandos=[
       }
     ],
   },
+  {
+    name:'play',
+    description:' Pone música en el canal en el que estés ',
+    options:[
+      {
+        name:'link',
+        description:' Link de la canción ',
+        type: 3,
+        required: true,
+      }
+    ],
+  },
 ];
 
 
 
-client.on('interactionCreate', (itr)=>{
+client.on('interactionCreate', async (itr)=>{
+  try{
+
   
-  if(itr.isChatInputCommand()){
-    canal=itr.channel;
-    nomCanal=itr.name;
-    if(itr.commandName==='time'){
-      
-     var time= new Intl.DateTimeFormat("es-ES", { dateStyle: "full" }).format(new Date());
-      itr.reply({
-        content: "Estamos a "+time,
-      })
-    }
-    if(itr.commandName==='per'){
-      var url='https://i.imgur.com/lrtA2hp.gif';
-      var col=itr.options.getString('color');
-      let obj= rosa[Math.floor(Math.random() * rosa.length)];
-      const embedMessage={
-        title:obj.nombre,
-        color: 3447003,
-        image:{ 
-          url:obj.url,
-          height:200,
-          width:200
-        },
-      };
-      
-      itr.reply({
-        embeds: [embedMessage]
+    const mapKey=itr.channel.guildId;
+    if(itr.isChatInputCommand()){
+      canal=itr.channel;
+      nomCanal=itr.name;
+      if(itr.commandName==='time'){
         
-      })
-    
-    if(col=="rosa"){}
-    else{
-      console.log(itr.options.data[0]);
-     /* itr.reply({
-        embeds:[{title:col}]
-      })*/
-
-    }
-    }
-    if(itr.commandName==='pablomotos'){
-      var url='https://i.imgur.com/lrtA2hp.gif';
-
-      const embedMessage={
-        title:"Pablo Motos",
-        color: 3447003,
-        image:{ 
-          url:url,
-          height:200,
-          width:200
-        },
-      };
-      
-      itr.reply({
-        embeds: [embedMessage]
-        
-      })
-
-    }
-    if(itr.commandName==='clean'){
-      itr.channel.clone();
-      let can= itr.guild.channels.cache.find(r=> r.name===nomCanal)
-      itr.channel.delete();
-      
-    }
-    if(itr.commandName==='registrar'){
-      var id=itr.user.id;
-
-
-      var sql ='SELECT id FROM usuarios where id='+id;
-      
-      let flag=0;
-      conex.query(sql,function(error,res){
-          if(error){
-          }
-          if(res===undefined){
-            itr.reply({
-              content:'La base de datos no está disponible',
-            });
-          }else{
-          if(res.length!=0){ 
-            console.log("flag->" +flag) 
-            itr.reply({
-              content: 'Estás ya registrado'
-            })//si hay algun resultado
-          }else
-          { flag=1;
-            console.log("flag->" +flag)
-            var tag=itr.user.tag
-            var avatar= itr.user.avatarURL()
-            var str=itr.user.createdAt
-            var createdAt = new Intl.DateTimeFormat("es-ES", { dateStyle: "full" }).format(str);
-            var sql= 'INSERT INTO usuarios(id,tag,avatar,createdAt) VALUES ('+id+',"'+tag+'","'+avatar+'","'+createdAt+'")'
-            console.log(id)
-            INSERT_DELETE(sql);
-            
-            itr.reply({
-              content: 'Registrado correctamente',
-            })
-          }
-      }})
-      
-    }
-    if(itr.commandName==='help'){
-      var str="";
-      for(i=0;i<comandos.length;i++){
-        str+="**/"+comandos[i].name+"** : "+comandos[i].description+"\n\n"
+      var time= new Intl.DateTimeFormat("es-ES", { dateStyle: "full" }).format(new Date());
+        itr.reply({
+          content: "Estamos a "+time,
+        })
       }
-      
-      itr.reply({
-        content:str
-      })
-    }
-
-
-    //JOIN
-    if(itr.commandName==='join'){
-      const voiceChan= itr.member.voice.channelId  
-        if(voiceChan===null){
-          itr.reply({
-            content: "Primero tienes que meterte a un canal de voz",
-            
-          });
-        }else{
-            const voiceCon=joinVoiceChannel({
-              channelId:voiceChan,
-              guildId:itr.guildId,
-              selfDeaf:false,
-              adapterCreator:itr.guild.voiceAdapterCreator,
-            })
-            
-            voiceCon.destroy
-            let channel=client.channels.cache.get(voiceChan)
-
-            itr.reply({content:'Estoy en **'+channel.name+'**'}).catch(error => itr.channel.send("Error al conectarme"));
-        }
-     
-    }
-
-
-    //LEAVE
-    if(itr.commandName==='leave'){
-      var dc=getVoiceConnection(itr.guildId)
-      
-      
-      if(dc===undefined){
-        itr.reply({
-          content:"No está conectado a ningun canal de voz",
-        })
-      }else {
-        dc.disconnect();
-        itr.reply({
-          content:"Dc'ing",
-        })
-      }   
-    }
-    //HABLAR?
-    if(itr.commandName==='leave'){
-      var dc=getVoiceConnection(itr.guildId)
-      const fs = require('fs');
-      const audio = dc.receiver.createStream(user, {mode:'opus'});
-      audio.pipe(fs.createWriteStream('user_audio'));
-      
-      if(dc===undefined){
-        itr.reply({
-          content:"No está conectado a ningun canal de voz",
-        })
-      }else {
-        dc.disconnect();
-        itr.reply({
-          content:"Dc'ing",
-        })
-      }   
-    }
-    
-    if(itr.commandName==='user'){
-      var user=itr.options.get('user').user;
-      console.log();
-      if(user===undefined){
-        itr.reply({
-          content:"Tienes que mencionar a alguien, no un rol",
-        })
-      }else{
-        
-        
+      if(itr.commandName==='per'){
+        var url='https://i.imgur.com/lrtA2hp.gif';
+        var col=itr.options.getString('color');
+        let obj= rosa[Math.floor(Math.random() * rosa.length)];
         const embedMessage={
-          title:user.username,
+          title:obj.nombre,
           color: 3447003,
-          fields:[
-            {name: 'Creado el ', value: new Intl.DateTimeFormat("es-ES", { dateStyle: "full" }).format(user.createdAt), inline: true },
-            {name: 'Unido a '+itr.guild.name+' el ', value: new Intl.DateTimeFormat("es-ES", { dateStyle: "full" }).format(itr.guild.members.cache.get(user.id).joinedAt), inline: true },
-          ],
           image:{ 
-            url:user.avatarURL(),
+            url:obj.url,
             height:200,
             width:200
           },
@@ -330,11 +177,160 @@ client.on('interactionCreate', (itr)=>{
           embeds: [embedMessage]
           
         })
+      
+      if(col=="rosa"){}
+      else{
+        console.log(itr.options.data[0]);
+      /* itr.reply({
+          embeds:[{title:col}]
+        })*/
+
+      }
+      }
+      if(itr.commandName==='pablomotos'){
+        var url='https://i.imgur.com/lrtA2hp.gif';
+        const embedMessage={
+          title:"Pablo Motos",
+          color: 3447003,
+          image:{ 
+            url:url,
+            height:200,
+            width:200
+          },
+        };
+        itr.reply({
+          embeds: [embedMessage]
+        })
+      }
+
+      if(itr.commandName==='clean'){
+        itr.channel.clone();
+        let can= itr.guild.channels.cache.find(r=> r.name===nomCanal)
+        itr.channel.delete();
         
       }
+
+      if(itr.commandName==='help'){
+        var str="";
+        for(i=0;i<comandos.length;i++){
+          str+="**/"+comandos[i].name+"** : "+comandos[i].description+"\n\n"
+        }
+        itr.reply({
+          content:str
+        })
+      }
+      //JOIN
+      if(itr.commandName==='join'){
+        if (!guildMap.has(mapKey))
+          await connect(itr, mapKey)
+        else
+          itr.reply({content:'Ya estoy conectado a un canal'})
+      
+      }
+      //PLAY
+      if(itr.commandName==="play"){
+
+
+          
+        let link1=""
+          try{
+            new URL(itr.options.getString('link'))
+            link1=itr.options.getString('link')
+          }catch(e){
+            itr.reply({content:"Debes adjuntar un link válido"})
+            return
+          }
+          if(!itr.member.voice.channelId){
+            itr.reply({content:"Primero debes unirte a un canal de voz"})
+            return
+          }
+
+          if(!servers[itr.guild.id]) servers[itr.guild.id] ={
+            queue:[]
+          }
+          var server = servers[itr.guild.id];
+          server.queue.push(itr.options.getString('link'));
+
+          if(!getVoiceConnection(itr.guildId)){  
+            var connec=joinVoiceChannel({
+            channelId:itr.member.voice.channelId,
+            guildId:itr.guildId,
+            selfDeaf:false,
+            adapterCreator:itr.guild.voiceAdapterCreator,
+          })
+          connec.on(VoiceConnectionStatus.Ready, ()=>{
+            var server = servers[itr.guild.id];
+            const player = createAudioPlayer();
+            connec.subscribe(player);
+            const resource = createAudioResource(ytdl(link1, {filter: "audioonly"}))
+            player.play(resource);
+            player.on(AudioPlayerStatus.Idle, () => {
+              connec.disconnect()
+              
+            });
+        
+            })
+          
+        }
+          
+      }
+
+
+      //LEAVE
+      if(itr.commandName==='leave'){
+        var dc=getVoiceConnection(itr.guildId)
+        
+        
+        
+        if(dc===undefined){
+          itr.reply({
+            content:"No está conectado a ningun canal de voz",
+          })
+        }else {
+          dc.disconnect();
+          itr.reply({
+            content:"Dc'ing",
+          })
+        }   
+      }
+
+      
+      if(itr.commandName==='user'){
+        var user=itr.options.get('user').user;
+        console.log();
+        if(user===undefined){
+          itr.reply({
+            content:"Tienes que mencionar a alguien, no un rol",
+          })
+        }else{
+          
+          
+          const embedMessage={
+            title:user.username,
+            color: 3447003,
+            fields:[
+              {name: 'Creado el ', value: new Intl.DateTimeFormat("es-ES", { dateStyle: "full" }).format(user.createdAt), inline: true },
+              {name: 'Unido a '+itr.guild.name+' el ', value: new Intl.DateTimeFormat("es-ES", { dateStyle: "full" }).format(itr.guild.members.cache.get(user.id).joinedAt), inline: false },
+            ],
+            image:{ 
+              url:user.avatarURL(),
+              height:200,
+              width:200
+            },
+          };
+          
+          itr.reply({
+            embeds: [embedMessage]
+            
+          })
+          
+        }
+      }
     }
+  }catch(e){
+    console.log('discordClient message: ' + e)
+    itr.reply({content:'Error, algo a pasado, si el error perdura contacte al desarrollador'});
   }
- 
 })
 //Comandos END
 
@@ -495,5 +491,69 @@ function INSERT_DELETE(sql){
 //---------------------------------------------------------------------------
 
 //--------------------VOICE RECON TRY--------------------------
+async function convertAudio(input){
+  try{//stereo a mono
+    const data = new Int16Array(input);
+    const ndata = new data.filter((el,idx)=> idx%2);
+    return Buffer.from(ndata);
+  }
+  catch(e){
+    console.log(e);
+    console.log('convertAudio: '+e);
+    throw e;
+  }
+}
+const SILENCE_FRAME = Buffer.from([0xF8, 0xFF, 0xFE]);
+
+const { Readable } = require('stream');
+
+class Silence extends Readable {
+  _read() {
+    this.push(SILENCE_FRAME);
+    this.destroy();
+  }
+}
+const guildMap= new Map();
+
+async function connect( itr , mapKey , link ){
+  try{
+    let vCanal= await itr.member.voice.channelId;
+    if(!vCanal) return itr.reply({content: 'Error, no estas conectado a un canal de voz',})
+    let tCanal= await itr.channel;
+    let vConex= await joinVoiceChannel({
+      channelId:vCanal,
+      guildId:itr.guildId,
+      selfDeaf:false,
+      adapterCreator:itr.guild.voiceAdapterCreator,
+    });
+
+    const player = createAudioPlayer();
+    vConex.subscribe(player);
+    const resource = createAudioResource(ytdl("https://youtu.be/EdQHA35vRiE", {filter: "audioonly"}))
+    player.play(resource);
+    player.on(AudioPlayerStatus.Idle, () => {
+      vConex.disconnect()
+      guildMap.delete(mapKey);
+    });
+    guildMap.set(mapKey,{
+      'tCanal':tCanal,
+      'vCanal':vCanal,
+      'vConex':vConex,
+      'selectedLang':'es',
+      'debug':false,
+    })
+    
+    vConex.on('disconnect', async(e)=>{
+      console.log("A");
+      if(e) console.log(e);
+      guildMap.delete(mapKey);
+    })
+    itr.reply({content:'Conectado!'})
+  }catch (e){
+    console.log('Connect: '+e);
+    itr.reply({content:'Me ha sido imposible conectarme'});
+    
+  }
+}
 
 
