@@ -9,6 +9,6 @@
     "ffmepg": "^0.0.2-security",
     "mysql": "^2.18.1",
     "opusscript": "^0.0.8",
-    "ytdl-core": "^4.11.5"
+    "play-dl": "^1.9.6"
   }
 }

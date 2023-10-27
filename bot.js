@@ -26,9 +26,11 @@ const { joinVoiceChannel,
 	StreamType,
 	AudioPlayerStatus,
 	VoiceConnectionStatus,
+  NoSubscriberBehavior,
 } = require('@discordjs/voice');
 
 const mysql = require('mysql');
+const https = require('https');
 
 const conex= mysql.createConnection({
   host:'localhost',
@@ -54,9 +56,10 @@ const player = new Player(client, {
 });
 const rest= new REST({version: '10'}).setToken(token);
 
-const ytdl = require("ytdl-core");
+const play = require("play-dl");
 
- var servers={}
+let servers={}
+let bendLink=""
 
 client.player=player;
 client.login(token);
@@ -222,20 +225,18 @@ client.on('interactionCreate', async (itr)=>{
       //JOIN
       if(itr.commandName==='join'){
         if (!guildMap.has(mapKey))
-          await connect(itr, mapKey)
+          await connect(itr, mapKey,"https://youtu.be/0yqm7vrCp-g")
         else
           itr.reply({content:'Ya estoy conectado a un canal'})
       
       }
       //PLAY
       if(itr.commandName==="play"){
-
-
-          
         let link1=""
           try{
             new URL(itr.options.getString('link'))
             link1=itr.options.getString('link')
+           
           }catch(e){
             itr.reply({content:"Debes adjuntar un link válido"})
             return
@@ -250,26 +251,66 @@ client.on('interactionCreate', async (itr)=>{
           }
           var server = servers[itr.guild.id];
           server.queue.push(itr.options.getString('link'));
-
-          if(!getVoiceConnection(itr.guildId)){  
-            var connec=joinVoiceChannel({
+          var yt_info = await play.video_info(itr.options.getString('link'))
+          var title=yt_info.video_details.title
+          itr.channel.send("Añadido **"+title+"** a la cola")
+          let connec=""
+          if(connec==""){  
+            let connec=joinVoiceChannel({
             channelId:itr.member.voice.channelId,
             guildId:itr.guildId,
             selfDeaf:false,
+            selfMute:false,
             adapterCreator:itr.guild.voiceAdapterCreator,
           })
-          connec.on(VoiceConnectionStatus.Ready, ()=>{
-            var server = servers[itr.guild.id];
+          itr.reply({content:"Reproduciendo música en "+itr.channel})
+          /**
+           var server = servers[itr.guild.id];
             const player = createAudioPlayer();
             connec.subscribe(player);
-            const resource = createAudioResource(ytdl(link1, {filter: "audioonly"}))
-            player.play(resource);
-            player.on(AudioPlayerStatus.Idle, () => {
-              connec.disconnect()
+            link= server.queue[0];
+            const resource = createAudioResource( ytdl("https://youtu.be/BZP1rYjoBgI", {filter: "audioonly"}))
+            console.log(resource)
+           */
+            let vuelta=0
+          async function playMusic(){
+            
+            let args = server.queue[0];
+            let stream = await play.stream(args)
+            var yt_info = await play.video_info(args)
+            var title=yt_info.video_details.title
+            itr.channel.send("Reproduciendo **"+title+"** "+vuelta)
+            let resource= createAudioResource(stream.stream, {inputType:stream.type})
+            vuelta++
+            return resource            
+          }
+          connec.on(VoiceConnectionStatus.Ready, async ()=>{
+            
+              var source=await playMusic()
+              let player = createAudioPlayer({behaviors:{noSubscriber:NoSubscriberBehavior.Play}})
+              player.play(source)
+              connec.subscribe(player)
+              player.on(AudioPlayerStatus.Idle, async() => {
+              
+              console.log(server.queue)
+                server.queue.shift()
+                if(server.queue[0]!=undefined){
+                  var source=await playMusic()
+                  player.play(source)
+                } 
+                else{ 
+                  setTimeout(() => {
+                    console.log(server.queue)
+                    if(server.queue[0]==undefined){
+                      
+                      connec.disconnect()}
+                  }, 10000);
+                }
+              
               
             });
         
-            })
+          })
           
         }
           
@@ -358,6 +399,7 @@ client.on('messageCreate', (message)=>{
     if(comm==="time"){
       var time= new Date();
       canal.send("Estamos a "+time);
+      guardarDatos('time')
     }
     else
     if(comm==="hola"){
@@ -440,52 +482,7 @@ function conect(){
     } 
   })
 }
-function EXIST(str){
-  var sql ='SELECT id FROM usuarios where id='+str;
-  
-  let flag=0;
-  conex.query(sql,function(error,res){
-      if(error){
-        throw error
-      }
-    
-      if(res.length!=0){ 
-        console.log("flag->" +flag) //si hay algun resultado
-      }else
-      { flag=1;
-        console.log("flag->" +flag)
-       
-      }
-  })
-  console.log("flag post query->" +flag)
-return flag;
-  
-  
-}
-function SELECT(sql,bool){
-  
-  conex.query(sql,function(error,res,fields){
-      if(error){
-        throw error
-      }
-      if(bool){
-        res.forEach(result => {
-            console.log("idx= "+result.idx);
-        });
-      }
-  })
-  
-  return res;  
-}
 
-function INSERT_DELETE(sql){
-  
-  conex.query(sql,function(error,res){
-      if(error) throw error
-      console.log(res.affectedRows);
-  })
-  
-}
 
 
 //---------------------------------------------------------------------------
@@ -506,6 +503,7 @@ async function convertAudio(input){
 const SILENCE_FRAME = Buffer.from([0xF8, 0xFF, 0xFE]);
 
 const { Readable } = require('stream');
+
 
 class Silence extends Readable {
   _read() {
@@ -529,7 +527,7 @@ async function connect( itr , mapKey , link ){
 
     const player = createAudioPlayer();
     vConex.subscribe(player);
-    const resource = createAudioResource(ytdl("https://youtu.be/EdQHA35vRiE", {filter: "audioonly"}))
+    const resource = createAudioResource(ytdl(link, {filter: "audioonly"}))
     player.play(resource);
     player.on(AudioPlayerStatus.Idle, () => {
       vConex.disconnect()
@@ -556,4 +554,18 @@ async function connect( itr , mapKey , link ){
   }
 }
 
+async function getSongInfo(link){
+  let url=link;
+  try{
+    let res = await fetch("http://noembed.com/embed?url="+url+"&callback=my_embed_function")
+    return await res.text();
+  }catch(error){
+    console.log(error)
+  }
+  
+}
+
+async function updateInfo(name,command ){
+    https.request()
+} 
 
