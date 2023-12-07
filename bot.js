@@ -29,15 +29,9 @@ const { joinVoiceChannel,
   NoSubscriberBehavior,
 } = require('@discordjs/voice');
 
-const mysql = require('mysql');
+
 const https = require('https');
 
-const conex= mysql.createConnection({
-  host:'localhost',
-  database:'albot',
-  user:'root',
-  password:'',
-});
 
 const client = new Client({ 
   intents: [
@@ -315,8 +309,6 @@ client.on('interactionCreate', async (itr)=>{
         }
           
       }
-
-
       //LEAVE
       if(itr.commandName==='leave'){
         var dc=getVoiceConnection(itr.guildId)
@@ -334,8 +326,7 @@ client.on('interactionCreate', async (itr)=>{
           })
         }   
       }
-
-      
+      //USER
       if(itr.commandName==='user'){
         var user=itr.options.get('user').user;
         console.log();
@@ -380,7 +371,7 @@ client.on('interactionCreate', async (itr)=>{
 
 client.on('ready', ()=>{
   console.log(`${client.user.tag} has logged in`);
-    conect();
+    
 });
 
 
@@ -468,26 +459,10 @@ async function main(message){
 //---------------------------------------------------------------------------
 
 
-//---------------BASES DE DATOS----------------------------------------------
-/*
-* @deprecated 
-*/
-function conect(){
-  conex.connect(function(err){
-    if(err){
-        console.error('Error de conexion, inicia la base de datos')
-        return
-    }else{
-        console.log('Conectado con el identificador '+ conex.threadId)
-    } 
-  })
-}
-
-
 
 //---------------------------------------------------------------------------
 
-//--------------------VOICE RECON TRY--------------------------
+//--------------------VOICE TRY--------------------------
 async function convertAudio(input){
   try{//stereo a mono
     const data = new Int16Array(input);
